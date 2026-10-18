@@ -1934,7 +1934,9 @@ const narrow=()=>matchMedia('(max-width: 899px)').matches;
 
 /* ---------- number parsing ---------- */
 function normNum(s){
-  return String(s??'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[−–—]/g,'-').replace(/[,\s%]/g,'').replace(/＝/g,'=').trim();
+  return String(s??'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/[−–—]/g,'-').replace(/[／⁄∕]/g,'/').replace(/[．]/g,'.')
+    .replace(/[,%]/g,'').replace(/＝/g,'=').replace(/\s+/g,' ').trim();
 }
 /* LaTeX -> 읽을 수 있는 평문 (안내 문장·aria-label 용) */
 function plain(s){
@@ -1953,8 +1955,12 @@ function numVal(s,fd){
   if(fd&&fd.alias) for(const a in fd.alias){ if(normNum(a)&&normNum(a)===t) return ansVal(fd.alias[a]); }
   if(fd&&fd.strip) for(const pre of fd.strip){const p=normNum(pre); if(p&&t.toLowerCase().startsWith(p.toLowerCase())) t=t.slice(p.length);}
   if(t==='') return NaN;
+  // 대분수: 1 1/4 → 1.25 (음수면 1 1/4 전체에 부호)
+  let m=t.match(/^([-+]?)(\d+)\s+(\d+)\/(\d+)$/);
+  if(m){ const d=Number(m[4]); if(!d) return NaN;
+    const v=Number(m[2])+Number(m[3])/d; return m[1]==='-'?-v:v; }
+  t=t.replace(/\s+/g,'');
   if(/^[-+]?\d*\.?\d+\/[-+]?\d*\.?\d+$/.test(t)){const [a,b]=t.split('/').map(Number); return b===0?NaN:a/b;}
-  if(/^[-+]?\d+\s*\d+\/\d+$/.test(t)) return NaN;
   return /^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)?Number(t):NaN;
 }
 const ansVal=a=>typeof a==='number'?a:numVal(a);
@@ -2048,11 +2054,17 @@ function inputHTML(p,s,r,k,fd){
   return `<input class="num${cls}" id="${p.id}__${k}" data-pid="${p.id}" data-k="${k}" inputmode="${fd&&fd.text?'text':'decimal'}" autocomplete="off" aria-label="${esc(fd&&fd.label?plain(fd.label):k)}" value="${esc(s.v[k])}">`;
 }
 /* 휴대폰 숫자 키패드에는 −, / 가 없다. 음수·분수 답을 칠 수 있도록 보조 키를 둔다. */
+function hasFrac(p){
+  const v=[];
+  if(p.type==='grid') p.rows.forEach(r=>{ if(!r.opts) v.push(...r.ans); });
+  if(p.type==='fields') p.fields.forEach(f=>v.push(f.ans));
+  return v.some(x=>typeof x==='string'&&x.includes('/'));
+}
 function keypad(p){
-  return `<div class="keys"><span>자판에 없는 기호</span>
+  const fr=hasFrac(p);
+  return `<div class="keys"><span>${fr?'분수는 빗금으로, 소수로 써도 된다':'자판에 없는 기호'}</span>
     <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="-" aria-label="빼기 기호 넣기">−</button>
-    <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="/" aria-label="분수 빗금 넣기">/</button>
-    <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="." aria-label="소수점 넣기">.</button></div>`;
+    ${fr?`<button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="/" aria-label="분수 빗금 넣기">/</button>`:''}</div>`;
 }
 function partHTML(p){
   const s=ps(p.id), r=s.res;
