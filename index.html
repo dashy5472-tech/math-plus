@@ -18,8 +18,8 @@
   --bg:#eef1f5; --grid:rgba(60,84,140,.07); --surface:#ffffff; --surface-2:#f5f7fb;
   --ink:#1a2233; --muted:#5a6478; --line:#d6dce7;
   --accent:#2b44b8; --accent-soft:#e3e8fb; --on-accent:#ffffff;
-  --mark:#ffe36b; --ok:#1d7f52; --ok-soft:#dcf3e7; --bad:#b8402a; --bad-soft:#fbe5df;
-  --review:#2f8a4e; --faint:#c97a6a; --shade:rgba(60,84,140,.08);
+  --mark:#ffe36b; --ok:#176841; --ok-soft:#dcf3e7; --bad:#b8402a; --bad-soft:#fbe5df; --line-ctl:#767f97;
+  --review:#277743; --faint:#ad5847; --shade:rgba(60,84,140,.08);
   --f-display:"Gowun Batang","Nanum Myeongjo",serif;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,monospace;
@@ -29,13 +29,13 @@
   --bg:#11141b; --grid:rgba(140,160,220,.06); --surface:#191e28; --surface-2:#1f2532;
   --ink:#e5e9f2; --muted:#9aa3b6; --line:#2e3646;
   --accent:#8c9cff; --accent-soft:#252d4d; --on-accent:#10142a;
-  --mark:rgba(255,214,60,.32); --ok:#5fcf95; --ok-soft:#173326; --bad:#ff8d74; --bad-soft:#3a2019;
+  --mark:rgba(255,214,60,.32); --ok:#5fcf95; --ok-soft:#173326; --bad:#ff8d74; --bad-soft:#3a2019; --line-ctl:#707d99;
   --review:#5fc07f; --faint:#d99484; --shade:rgba(140,160,220,.1); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#11141b; --grid:rgba(140,160,220,.06); --surface:#191e28; --surface-2:#1f2532;
   --ink:#e5e9f2; --muted:#9aa3b6; --line:#2e3646;
   --accent:#8c9cff; --accent-soft:#252d4d; --on-accent:#10142a;
-  --mark:rgba(255,214,60,.32); --ok:#5fcf95; --ok-soft:#173326; --bad:#ff8d74; --bad-soft:#3a2019;
+  --mark:rgba(255,214,60,.32); --ok:#5fcf95; --ok-soft:#173326; --bad:#ff8d74; --bad-soft:#3a2019; --line-ctl:#707d99;
   --review:#5fc07f; --faint:#d99484; --shade:rgba(140,160,220,.1); color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -53,6 +53,7 @@ mjx-container[display="true"]{display:block;overflow-x:auto;overflow-y:hidden;ma
 mjx-container:not([display]){display:inline-block;white-space:nowrap;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle;scrollbar-width:none;-ms-overflow-style:none}
 mjx-container:not([display])::-webkit-scrollbar{width:0;height:0;display:none}
 .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* header */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -222,7 +223,7 @@ details.brief figure{background:var(--surface)}
 .tpl{display:block;font-size:15px;line-height:2.4}
 .tpl>span{display:inline}
 .tpl input.num{display:inline-block;vertical-align:middle;margin:0 4px}
-input.num{width:100%;max-width:120px;height:46px;border:1.5px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:500 18px var(--f-num);text-align:center;padding:0 8px}
+input.num{width:100%;max-width:120px;height:46px;border:1.5px solid var(--line-ctl);border-radius:9px;background:var(--surface);color:var(--ink);font:500 18px var(--f-num);text-align:center;padding:0 8px}
 .fld-row input.num,.tpl input.num{width:104px}
 input.num.ok{border-color:var(--ok);background:var(--ok-soft)}
 input.num.bad{border-color:var(--bad);background:var(--bad-soft)}
@@ -230,16 +231,20 @@ input.num.bad{border-color:var(--bad);background:var(--bad-soft)}
 .group-l{font-size:14px;font-weight:600}
 .group-l small{font-weight:500;color:var(--muted);margin-left:6px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{min-height:46px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:15px;text-align:left}
+.chip{min-height:46px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line-ctl);background:var(--surface);font-size:15px;text-align:left}
 .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
 .chip.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
 .chip.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
 .write{display:grid;gap:8px}
+.write.need textarea{border-color:var(--bad);background:var(--bad-soft)}
+.need-msg{font-size:14px;line-height:1.6;background:var(--mark);border-radius:8px;padding:10px 12px;color:var(--ink)}
 .write-l{font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg{display:inline-flex;border:1.5px solid var(--line-ctl);border-radius:10px}
+.seg button:first-child{border-radius:9px 0 0 9px}
+.seg button:last-child{border-radius:0 9px 9px 0}
 .seg button{min-height:44px;padding:0 14px;border:0;background:var(--surface);font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
-textarea{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);color:var(--ink);font:16px/1.6 var(--f-body);resize:vertical}
+textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-radius:10px;padding:12px;background:var(--surface);color:var(--ink);font:16px/1.6 var(--f-body);resize:vertical}
 .paper{border:1.5px dashed var(--line);border-radius:10px;padding:14px;font-size:14.5px;color:var(--muted);background:repeating-linear-gradient(transparent 0 27px,var(--line) 27px 28px)}
 .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .lock{font-size:13px;color:var(--muted)}
@@ -343,6 +348,7 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line);border-radiu
 </style>
 
 <div id="app"></div>
+<div id="live" role="status" aria-live="polite" class="sr-only"></div>
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="toc" hidden role="dialog" aria-modal="true" aria-label="활동 목록">
   <div class="panel-head"><b>활동 목록</b><button class="btn sm ghost" data-act="toc-close">닫기</button></div>
@@ -2059,21 +2065,21 @@ function partHTML(p){
   }
   let write='';
   if(p.write){
-    write=`<div class="write"><div class="write-l"><span>서술${p.write.lines?` <small style="font-weight:500;color:var(--muted)">(${p.write.lines}문장${p.write.lines>1?' 이내':''})</small>`:''}</span>
+    write=`<div class="write${s.needWrite?' need':''}">${s.needWrite?'<p class="need-msg">까닭을 한 줄이라도 써서 제출하면 자기점검과 모범 답안이 열린다. 공책에 썼다면 ‘노트에 쓰기’를 고르면 된다.</p>':''}<div class="write-l"><span>서술${p.write.lines?` <small style="font-weight:500;color:var(--muted)">(${p.write.lines}문장${p.write.lines>1?' 이내':''})</small>`:''}</span>
       <div class="seg" role="group" aria-label="답 쓰는 방법"><button aria-pressed="${!s.note}" data-act="mode" data-pid="${p.id}" data-v="app">앱에 쓰기</button><button aria-pressed="${s.note}" data-act="mode" data-pid="${p.id}" data-v="note">노트에 쓰기</button></div></div>`+
       (s.note?`<div class="paper">공책에 직접 써 보자. 다 썼으면 아래 버튼을 눌러 점검한다.</div>`
              :`<textarea id="${p.id}__text" data-pid="${p.id}" data-k="text" placeholder="읽은 값을 근거로 써 보자." aria-label="답 쓰기">${esc(s.v.text)}</textarea>`)+`</div>`;
   }
   let fb='';
   if(r&&hasAuto(p)){
-    if(r.ok) fb=`<div class="fb ok" role="status"><strong>정확하다.</strong></div>`;
+    if(r.ok) fb=`<div class="fb ok" role="status"><strong>${p.write&&!s.sub?'여기까지는 정확하다. 아래 서술이 남았다.':'정확하다.'}</strong></div>`;
     else fb=`<div class="fb bad" role="status"><strong>${r.miss}곳을 다시 보자.</strong>${r.msgs.map(m=>`<p>${m}</p>`).join('')}${r.more?`<p>…외 ${r.more}가지</p>`:''}</div>`;
   }
-  if(s.needWrite) fb+=`<div class="fb warn" role="status">서술도 써서 제출하면 자기점검이 열린다. 공책에 썼다면 ‘노트에 쓰기’를 고른다.</div>`;
+
   let hints='';
   for(let i=0;i<s.hint&&i<p.hints.length;i++){const h=p.hints[i];
     hints+=`<div class="hint"><b>힌트 ${i+1}</b><p>${h.t}</p>${h.ref?`<button class="btn sm" data-act="ref" data-ref="${h.ref}">읽기자료에서 보기</button>`:''}</div>`;}
-  const primary=`<button class="btn primary" data-act="check" data-pid="${p.id}">${hasAuto(p)?'확인하기':(s.sub?'다시 점검하기':'제출하고 점검하기')}</button>`;
+  const primary=`<button class="btn primary" data-act="check" data-pid="${p.id}">${!hasAuto(p)?(s.sub?'다시 점검하기':'제출하고 점검하기'):(p.write?(s.sub?'다시 확인하기':'확인하고 점검하기'):'확인하기')}</button>`;
   let hb='';
   if(s.hint<Math.min(2,p.hints.length)){
     hb = s.tried ? `<button class="btn" data-act="hint" data-pid="${p.id}">힌트 ${s.hint+1} 보기</button>`
@@ -2096,7 +2102,22 @@ function partHTML(p){
     ${qline}${aside}${brief(p)}${fig}${body}${write}
     <div class="actions">${primary}${hb}</div>${fb}${hints}${chk}${model}</section>`;
 }
-function rerenderPart(id){const el=document.getElementById('part-'+id); if(el){const tmp=document.createElement('div'); tmp.innerHTML=partHTML(partById(id)); const n=tmp.firstElementChild; el.replaceWith(n); hydrateFigs(n); typeset(n); refreshDots();}}
+function focusKey(el){ if(!el||el===document.body) return null;
+  if(el.id) return '#'+CSS.escape(el.id);
+  const a=el.dataset&&el.dataset.act;
+  if(a==='pick') return `[data-act="pick"][data-pid="${el.dataset.pid}"][data-k="${el.dataset.k}"][data-v="${CSS.escape(el.dataset.v)}"]`;
+  if(a==='cell') return `[data-act="cell"][data-pid="${el.dataset.pid}"][data-k="${el.dataset.k}"][data-v="${CSS.escape(el.dataset.v)}"]`;
+  if(a&&el.dataset.pid) return `[data-act="${a}"][data-pid="${el.dataset.pid}"]`;
+  return null;}
+function rerenderPart(id){const el=document.getElementById('part-'+id); if(!el) return;
+  const key=el.contains(document.activeElement)?focusKey(document.activeElement):null;
+  const sel=document.activeElement, ss=sel&&sel.selectionStart, se=sel&&sel.selectionEnd;
+  const tmp=document.createElement('div'); tmp.innerHTML=partHTML(partById(id)); const n=tmp.firstElementChild;
+  el.replaceWith(n); hydrateFigs(n); typeset(n); refreshDots();
+  if(key){ const t=n.querySelector(key)||document.querySelector(key);
+    if(t){ t.focus({preventScroll:true});
+      if(ss!=null&&t.setSelectionRange) try{t.setSelectionRange(ss,se)}catch(e){} } }
+  else { const f=n.querySelector('[data-act="check"]'); if(f&&document.activeElement===document.body) f.focus({preventScroll:true}); }}
 function refreshDots(){const t=T(); document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('done',actDone(t.acts[i])));
   const pr=document.querySelector('.prog'); if(pr){const nd=t.acts.filter(actDone).length;
     pr.innerHTML=`${ui.screen==='act'?'활동 '+(ui.act+1):'완료'} <b style="color:var(--ok)">${nd}</b>/${t.acts.length}`;
@@ -2194,12 +2215,15 @@ function hydrateFigs(root){
   });
 }
 
+function say(t){ if(!t) return; const el=document.getElementById('live'); if(!el) return;
+  el.textContent=''; setTimeout(()=>{el.textContent=t;},60); }
+
 /* ---------- grading ---------- */
 function grade(p){
   const s=ps(p.id), f={}, msgs=[], sel={}; let miss=0;
   if(p.type==='grid'){
     p.rows.forEach((row,i)=>p.cols.forEach((c,j)=>{const k=`${i}_${j}`;const ok=row.opts?s.v[k]===row.ans[j]:checkNum(s.v[k],row.ans[j],row.tol,row);f[k]=ok;if(!ok)miss++;}));
-    if(miss) msgs.push('빨간 칸을 자료에서 다시 읽어 보자.');
+    if(miss) msgs.push(`${miss}개 칸의 값을 자료에서 다시 읽어 보자. 틀린 칸은 테두리가 굵고 붉게 표시된다.`);
   } else if(p.type==='fields'){
     p.fields.forEach(fd=>{const ok=checkNum(s.v[fd.k],fd.ans,fd.tol,fd);f[fd.k]=ok;
       if(!ok){miss++; const w=wrongMsg(s.v[fd.k],fd); if(w) msgs.push(w); else if(String(s.v[fd.k]??'').trim()==='') msgs.push(`‘${plain(fd.label)}’ 칸이 비어 있다.`);}});
@@ -2223,8 +2247,14 @@ function grade(p){
 
 /* ---------- reading panel ---------- */
 const scrim=document.getElementById('scrim');
-function openSheet(){const pn=document.getElementById('panel'); if(!pn||!narrow())return; pn.classList.add('open'); scrim.hidden=false; document.documentElement.style.overflow='hidden';}
-function closeSheet(){const pn=document.getElementById('panel'); if(pn) pn.classList.remove('open'); scrim.hidden=true; document.documentElement.style.overflow='';}
+let sheetRet=null;
+function openSheet(){const pn=document.getElementById('panel'); if(!pn||!narrow())return;
+  sheetRet=document.activeElement; pn.classList.add('open'); pn.setAttribute('role','dialog'); pn.setAttribute('aria-modal','true');
+  scrim.hidden=false; document.documentElement.style.overflow='hidden'; app.setAttribute('inert','');
+  const c=pn.querySelector('[data-act="sheet-close"]'); if(c) c.focus();}
+function closeSheet(){const pn=document.getElementById('panel'); if(pn){pn.classList.remove('open'); pn.removeAttribute('aria-modal');}
+  scrim.hidden=true; document.documentElement.style.overflow=''; app.removeAttribute('inert');
+  if(sheetRet&&sheetRet.isConnected){sheetRet.focus({preventScroll:true});} sheetRet=null;}
 function showRef(ref){
   const pn=document.getElementById('panel'); if(!pn) return;
   pn.querySelectorAll('.hl').forEach(e=>e.classList.remove('hl'));
@@ -2242,9 +2272,12 @@ function openToc(){const t=T(); let last=null, h='';
       <span class="ix">${i+1}</span><span style="min-width:0">${a.title}${a.heading?` <span style="color:var(--muted);font-size:13px">${a.heading}</span>`:''}</span>
       <span class="st${fin?' done':''}">${fin?'완료':n+'/'+all}</span></button>`;});
   document.getElementById('toc-b').innerHTML=`<div class="toc-list">${h}</div>`;
-  tocEl.hidden=false; scrim.hidden=false; document.documentElement.style.overflow='hidden';
+  tocEl.hidden=false; scrim.hidden=false; document.documentElement.style.overflow='hidden'; app.setAttribute('inert','');
+  tocRet=document.activeElement;
   const cur=tocEl.querySelector('[aria-current="true"]')||tocEl.querySelector('.toc-item'); if(cur) cur.focus();}
-function closeToc(){ if(tocEl.hidden) return; tocEl.hidden=true; if(document.getElementById('panel')&&!narrow()){} scrim.hidden=true; document.documentElement.style.overflow='';}
+let tocRet=null;
+function closeToc(){ if(tocEl.hidden) return; tocEl.hidden=true; scrim.hidden=true; document.documentElement.style.overflow=''; app.removeAttribute('inert');
+  if(tocRet&&tocRet.isConnected) tocRet.focus({preventScroll:true}); tocRet=null;}
 
 /* ---------- zoom ---------- */
 const zoom=document.getElementById('zoom');
@@ -2261,12 +2294,12 @@ function openZoom(name,cap){ if(!FIGS[name]) return;
     +`<div class="zoom-foot"><button class="btn" data-act="unzoom">닫기</button></div>`;
   zb.scrollLeft=0; zb.scrollTop=0;
   zfi = narrow()?2:0; applyZF();
-  zoom.hidden=false; document.documentElement.style.overflow='hidden';
+  zoom.hidden=false; document.documentElement.style.overflow='hidden'; app.setAttribute('inert','');
   zoomRet=document.activeElement; const x=document.getElementById('zoom-x'); if(x) x.focus();
   typeset(zb);}
 function selectCard(){const el=document.getElementById('mycard'); if(!el) return;
   const r=document.createRange(); r.selectNodeContents(el); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r);}
-function closeZoom(){ if(zoom.hidden) return; zoom.hidden=true; document.documentElement.style.overflow='';
+function closeZoom(){ if(zoom.hidden) return; zoom.hidden=true; document.documentElement.style.overflow=''; app.removeAttribute('inert');
   document.getElementById('zoom-b').innerHTML='';
   if(zoomRet&&zoomRet.isConnected) zoomRet.focus(); zoomRet=null;}
 
@@ -2354,19 +2387,25 @@ document.addEventListener('click',e=>{
     case 'check': {const p=partById(id),s=ps(id); s.needWrite=false;
       if(hasAuto(p)){ s.res=grade(p); s.tried=true; }
       if(p.write){ const txt=String(s.v.text||'').trim();
-        if(s.note||txt.length>=5){ s.sub=true; s.tried=true; }
+        if(s.note||txt.length>=2){ s.sub=true; s.tried=true; }
         else { s.needWrite=true; const ta=document.getElementById(id+'__text'); if(ta) ta.focus(); } }
-      save(); rerenderPart(id); break;}
+      save(); rerenderPart(id);
+      {const msgs=[];
+       if(hasAuto(p)) msgs.push(s.res.ok?'정답입니다.':`${s.res.miss}곳이 틀렸습니다. ${s.res.msgs.join(' ')}`);
+       if(p.write&&s.needWrite) msgs.push('서술을 쓰면 자기점검이 열립니다.');
+       else if(p.write&&s.sub) msgs.push('제출했습니다. 자기점검 항목이 열렸습니다.');
+       say(msgs.join(' '));}
+      break;}
     case 'pick': {const s=ps(id),k=b.dataset.k,v=b.dataset.v;
       if(b.dataset.multi==='1'){const arr=Array.isArray(s.v[k])?s.v[k].slice():[]; const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); s.v[k]=arr;}
       else s.v[k]=v;
       s.res=null; save(); rerenderPart(id); break;}
     case 'cell': {const s=ps(id); s.v[b.dataset.k]=b.dataset.v; s.res=null; save(); rerenderPart(id); break;}
     case 'mode': {const s=ps(id); s.note=b.dataset.v==='note'; save(); rerenderPart(id); break;}
-    case 'idk': {const s=ps(id); s.tried=true; s.hint=Math.max(s.hint,1); save(); rerenderPart(id); const h=partById(id).hints[0]; if(h&&h.ref) showRef(h.ref); break;}
-    case 'hint': {const s=ps(id); s.hint=Math.min(2,s.hint+1); save(); rerenderPart(id); const h=partById(id).hints[s.hint-1]; if(s.hint===1&&h&&h.ref) showRef(h.ref); break;}
+    case 'idk': {const s=ps(id); s.tried=true; s.hint=Math.max(s.hint,1); save(); rerenderPart(id); const h=partById(id).hints[0]; say('힌트 1단계: '+plain(h&&h.t||'')); if(h&&h.ref) showRef(h.ref); break;}
+    case 'hint': {const s=ps(id); s.hint=Math.min(2,s.hint+1); save(); rerenderPart(id); const h=partById(id).hints[s.hint-1]; say(`힌트 ${s.hint}단계: `+plain(h&&h.t||'')); if(s.hint===1&&h&&h.ref) showRef(h.ref); break;}
     case 'ref': showRef(b.dataset.ref); break;
-    case 'model': {ps(id).model=true; save(); rerenderPart(id); break;}
+    case 'model': {ps(id).model=true; save(); rerenderPart(id); say('모범 답안을 열었습니다.'); break;}
     case 'toc-open': openToc(); break;
     case 'toc-close': closeToc(); break;
     case 'toc-go': {closeToc(); ui.act=+b.dataset.i; ui.screen='act'; ts().last=ui.act; save(); render(); break;}
