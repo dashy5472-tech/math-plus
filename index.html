@@ -2013,8 +2013,6 @@ function render(){
     if(el){ setTimeout(()=>{ el.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
       el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700);
       const f=el.querySelector('input.num,.chip,textarea,[data-act="check"]'); if(f) f.focus({preventScroll:true}); },160); } }
-  const pb=document.getElementById('print-card');
-  if(pb&&window.self===window.top&&typeof window.print==='function') pb.hidden=false;
   window.scrollTo(0,0);
 }
 function homeHTML(){
@@ -2203,14 +2201,23 @@ function cardText(){
   if(d.reflText){ L.push(`   ${d.reflText}`); }
   return L.join('\n');
 }
+function printDoc(){
+  const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  const card=document.getElementById('mycard');
+  return '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1"><title>내 정리 카드</title>'
+    +'<style>'+css+'\nbody{margin:0;padding:14px;background:#fff;color:#111}.myp-go{display:none!important}</style>'
+    +'</head><body>'+(card?card.outerHTML:'')+'</body></html>';
+}
 function cardHTML(){
   const d=cardData();
   return `<main class="card-wrap wrap">
     <div class="card-tools">
       <button class="btn" data-act="report">← 점검 결과</button>
       <button class="btn primary" data-act="copy-card">카드 내용 복사</button>
-      <button class="btn" data-act="print-card" id="print-card" hidden>PDF로 저장</button>
+      <button class="btn" data-act="print-card" id="print-card">PDF로 저장</button>
     </div>
+    <p class="disc" id="print-tip" hidden>인쇄 창이 열리지 않으면 브라우저 메뉴(⋮ 또는 공유 버튼)에서 <b>인쇄</b>를 고르고 <b>PDF로 저장</b>을 선택하면 된다. 화면을 <b>캡처</b>해도 된다.</p>
     <p class="disc">이 화면을 <b>캡처</b>해 두면 수행평가 직전에 내가 쓴 답을 한눈에 다시 볼 수 있다. 모범 답안은 들어 있지 않다.</p>
     <article class="mycard" id="mycard">
       <header class="mycard-h">
@@ -2435,7 +2442,14 @@ document.addEventListener('click',e=>{
     case 'report': ui.screen='report'; render(); break;
     case 'card': ui.screen='card'; render(); break;
     case 'goto': {ui.act=+b.dataset.i; ui.screen='act'; ui.goto=b.dataset.part; ts().last=ui.act; save(); render(); break;}
-    case 'print-card': try{window.print()}catch(e){} break;
+    case 'print-card': {
+      let ok=false;
+      if(window.self===window.top&&typeof window.print==='function'){ try{window.print(); ok=true;}catch(e){} }
+      if(!ok){ let w=null; try{w=window.open('','_blank');}catch(e){}
+        if(w&&w.document){ try{ w.document.open(); w.document.write(printDoc()); w.document.close();
+            setTimeout(()=>{try{w.focus();w.print();}catch(e){}},700); ok=true; }catch(e){} } }
+      if(!ok){ const n=document.getElementById('print-tip'); if(n){n.hidden=false; say('인쇄 창을 열 수 없다. 아래 안내를 참고하자.');} }
+      break;}
     case 'copy-card': {const txt=cardText();
       const done2=()=>{b.textContent='복사했다'; setTimeout(()=>{if(b.isConnected)b.textContent='카드 내용 복사';},2000);};
       try{ navigator.clipboard.writeText(txt).then(done2,()=>{selectCard();}); }catch(e){ selectCard(); }
