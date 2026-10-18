@@ -289,6 +289,8 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-r
 .myp-b p{overflow-wrap:anywhere}
 .myp-m{font-size:12.5px;color:var(--muted)}
 .myp-x{font-size:12.5px;color:var(--bad)}
+#img-out{margin:10px 0 14px}
+#img-out img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
 .myp-go{margin-top:6px;min-height:36px;padding:6px 12px;font-size:13px;border:1px solid var(--line);
   background:var(--surface-2);border-radius:8px;color:var(--accent);font-weight:600}
 .myp-go:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -338,7 +340,7 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-r
   @page{size:A4;margin:14mm}
   html,body{background:#fff!important;color:#111!important}
   body{background-image:none!important;font-size:10.5pt}
-  .top,.bar,.panel,.scrim,.sheet,.zoom,.card-tools,.disc,.btn,.myp-go{display:none!important}
+  .top,.bar,.panel,.scrim,.sheet,.zoom,.card-tools,.disc,.btn,.myp-go,#img-out{display:none!important}
   .card-wrap{padding:0;max-width:none}
   .mycard{border:0;padding:0;gap:10px}
   .mycard-h{border-bottom:1.5pt solid #333}
@@ -386,7 +388,7 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-r
 <script>
 window.MathJax = {
   tex:{inlineMath:[['\\(','\\)']], displayMath:[['\\[','\\]']], processEscapes:true},
-  svg:{fontCache:'global'},
+  svg:{fontCache:'local'},
   options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']},
   startup:{typeset:false, ready(){ MathJax.startup.defaultReady(); MathJax.startup.promise.then(()=>typeset(document.body)); }}
 };
@@ -2201,21 +2203,39 @@ function cardText(){
   if(d.reflText){ L.push(`   ${d.reflText}`); }
   return L.join('\n');
 }
-function cacheSVG(){
-  // MathJax tex-svg는 글리프를 문서 한 곳의 <svg> 캐시에 모아 두고 <use>로 참조한다.
-  // 이것을 함께 복사하지 않으면 인쇄 문서에서 수식이 빈칸으로 나온다.
-  const c=document.getElementById('MJX-SVG-global-cache');
-  return c?c.outerHTML:'';
+/* 내보낼 때 쓰는 공통 조각: 페이지의 모든 스타일 + XML 안전 처리 */
+function exportCSS(){ return xmlSafe([...document.querySelectorAll('style')].map(s=>s.textContent).join('\n')); }
+function xmlSafe(t){ return t.replace(/&nbsp;/g,'&#160;')
+  .replace(/&(?![a-zA-Z][a-zA-Z0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)/g,'&amp;'); }
+/* 카드를 그림 한 장으로 — 인쇄가 막힌 휴대폰 브라우저를 위한 길 */
+function cardImage(cb){
+  const card=document.getElementById('mycard'); if(!card) return cb(null);
+  const W=Math.ceil(card.getBoundingClientRect().width), H=Math.ceil(card.scrollHeight);
+  const body='<style>'+exportCSS()+'\n.myp-go{display:none!important}</style>'+xmlSafe(card.outerHTML);
+  // data-theme="light"를 붙여 어두운 화면에서도 밝은 색으로 내보낸다
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" data-theme="light" width="'+W+'" height="'+H+'">'
+    +'<foreignObject x="0" y="0" width="'+W+'" height="'+H+'">'
+    +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+W+'px;background:#fff">'+body+'</div>'
+    +'</foreignObject></svg>';
+  const im=new Image();
+  im.onload=()=>{ try{
+      const cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2;
+      const g=cv.getContext('2d'); g.scale(2,2); g.fillStyle='#fff'; g.fillRect(0,0,W,H); g.drawImage(im,0,0);
+      if(cv.toBlob) cv.toBlob(bl=>cb(bl?URL.createObjectURL(bl):cv.toDataURL('image/png')),'image/png');
+      else cb(cv.toDataURL('image/png'));
+    }catch(e){ cb(null); } };
+  im.onerror=()=>cb(null);
+  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 function printDoc(){
-  const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  const css=exportCSS();
   const card=document.getElementById('mycard');
   return '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
     +'<meta name="viewport" content="width=device-width,initial-scale=1"><title>내 정리 카드</title>'
     +'<style>'+css+'\nbody{margin:0;padding:14px;background:#fff;color:#111}.myp-go{display:none!important}'
     +'.pbar{margin:0 0 14px;padding:10px 12px;border:1px solid #c9cdd8;border-radius:8px;font:14px system-ui;color:#333}'
     +'@media print{.pbar{display:none!important}}</style>'
-    +'</head><body>'+cacheSVG()+'<p class="pbar">브라우저 메뉴 → <b>인쇄</b> → <b>PDF로 저장</b>. 인쇄가 막혀 있으면 이 화면을 캡처해도 된다.</p>'
+    +'</head><body><p class="pbar">브라우저 메뉴 → <b>인쇄</b> → <b>PDF로 저장</b>. 인쇄가 막혀 있으면 이 화면을 캡처해도 된다.</p>'
     +(card?card.outerHTML:'')+'</body></html>';
 }
 function cardHTML(){
@@ -2225,9 +2245,11 @@ function cardHTML(){
       <button class="btn" data-act="report">← 점검 결과</button>
       <button class="btn primary" data-act="copy-card">카드 내용 복사</button>
       <button class="btn" data-act="print-card" id="print-card">PDF로 저장</button>
+      <button class="btn" data-act="img-card" id="img-card">이미지로 저장</button>
     </div>
     <p class="disc" id="print-tip" hidden>인쇄용 페이지가 새 탭에 열린다. 인쇄 창이 안 뜨면 그 탭에서 브라우저 메뉴(⋮ 또는 공유 버튼) → <b>인쇄</b> → <b>PDF로 저장</b>을 고르면 된다.<br>카카오톡·네이버 같은 <b>앱 안의 화면</b>에서는 인쇄가 막혀 있다. 메뉴에서 <b>다른 브라우저로 열기</b>(Chrome·Safari)를 고른 뒤 다시 누르거나, 화면을 <b>캡처</b>하자.</p>
     <p class="disc">이 화면을 <b>캡처</b>해 두면 수행평가 직전에 내가 쓴 답을 한눈에 다시 볼 수 있다. 모범 답안은 들어 있지 않다.</p>
+    <div id="img-out" hidden></div>
     <article class="mycard" id="mycard">
       <header class="mycard-h">
         <div><div class="eyebrow">내 정리 카드</div><h1>${d.t.title}</h1></div>
@@ -2458,6 +2480,20 @@ document.addEventListener('click',e=>{
         }catch(e){ w=null; } }
       if(!w && window.self===window.top && typeof window.print==='function'){ try{window.print();}catch(e){} }
       {const n=document.getElementById('print-tip'); if(n){ n.hidden=false; say('인쇄용 페이지를 열었다. 열리지 않으면 아래 안내를 보자.'); }}
+      break;}
+    case 'img-card': {
+      b.textContent='만드는 중…'; b.disabled=true;
+      cardImage(url=>{ b.disabled=false; b.textContent='이미지로 저장';
+        const out=document.getElementById('img-out');
+        if(!url){ const n=document.getElementById('print-tip'); if(n) n.hidden=false;
+          say('이미지를 만들지 못했다. 화면을 캡처하자.'); return; }
+        out.innerHTML='<p class="disc">아래 그림을 <b>꾹 눌러</b> “이미지 저장”을 고르면 사진첩에 들어간다. 저장이 자동으로 됐다면 그대로 두면 된다.</p>'
+          +'<img src="'+url+'" alt="내 정리 카드를 한 장으로 담은 그림">';
+        out.hidden=false;
+        const a=document.createElement('a'); a.href=url; a.download='내_정리_카드.png';
+        document.body.appendChild(a); try{a.click();}catch(e){} a.remove();
+        out.scrollIntoView({block:'start',behavior:'smooth'});
+        say('이미지를 만들었다. 꾹 눌러 저장하자.'); });
       break;}
     case 'copy-card': {const txt=cardText();
       const done2=()=>{b.textContent='복사했다'; setTimeout(()=>{if(b.isConnected)b.textContent='카드 내용 복사';},2000);};
