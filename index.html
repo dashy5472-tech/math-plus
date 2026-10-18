@@ -289,8 +289,39 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-r
 .myp-b p{overflow-wrap:anywhere}
 .myp-m{font-size:12.5px;color:var(--muted)}
 .myp-x{font-size:12.5px;color:var(--bad)}
+/* ---- 완성된 수행평가지 ---- */
+.wbox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;background:var(--surface-2)}
+.wbox>*+*{margin-top:6px}
+.wlead{font-size:14px}
+.wpart{padding:10px 0;border-bottom:1px dashed var(--line);display:grid;gap:7px}
+.wpart:last-child{border-bottom:0}
+.wq{font-size:14.5px;line-height:1.65;overflow-wrap:anywhere}
+.wno{font-weight:700;color:var(--accent);margin-right:5px}
+.waside{font-size:13px;color:var(--muted)}
+.wmk{margin-left:7px;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.wmk.ok{color:var(--ok);background:var(--ok-soft)}
+.wmk.bad{color:var(--bad);background:var(--bad-soft)}
+.fin{display:inline-block;min-width:34px;padding:0 6px;margin:0 2px;font-family:var(--f-num);font-weight:600;
+  border-bottom:1.5px solid var(--accent);text-align:center}
+.fin.empty{border-bottom-color:var(--line-ctl)}
+.wt{border-collapse:collapse;width:100%;font-size:13.5px}
+.wt th,.wt td{border:1px solid var(--line);padding:5px 6px;text-align:center}
+.wt thead th{background:var(--surface-2);font-weight:600}
+.wt tbody th{background:var(--surface-2);font-weight:600;white-space:nowrap}
+.wtpl,.wrow{font-size:14px;line-height:2;overflow-wrap:anywhere}
+.opt{display:inline-block;margin-right:8px;font-size:13.5px;color:var(--muted)}
+.opt.on{color:var(--ink);font-weight:600}
+.wwrite{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:8px 10px;font-size:14px}
+.wwrite b{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.wnote{color:var(--muted)}
+.wmiss{font-size:12.5px;color:var(--bad)}
+.whint{font-size:12.5px;color:var(--muted)}
+.wpart figure{margin:2px 0}
+.wpart figure>svg{max-height:52vh}
 #img-out{margin:10px 0 14px}
 #img-out img{width:100%;border:1px solid var(--line);border-radius:10px;display:block}
+#img-out .imgpg{margin:0 0 10px}
+#img-out figcaption{font-size:12px;color:var(--muted);text-align:center;padding-top:3px}
 .myp-go{margin-top:6px;min-height:36px;padding:6px 12px;font-size:13px;border:1px solid var(--line);
   background:var(--surface-2);border-radius:8px;color:var(--accent);font-weight:600}
 .myp-go:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -349,7 +380,11 @@ textarea{width:100%;min-height:110px;border:1.5px solid var(--line-ctl);border-r
   .mycard-act{break-inside:avoid;page-break-inside:avoid}
   .mycard-act h2{color:#111;border-left:2pt solid #333;font-size:11pt}
   .myp{border-bottom:.5pt dashed #bbb;padding:5px 0}
-  .myp-x{color:#111;font-weight:600}
+  .myp-x,.wmiss{color:#111;font-weight:600}
+  .wmk.ok,.wmk.bad{color:#111;background:#eee}
+  .wbox,.wt thead th,.wt tbody th{background:#f4f4f4}
+  .wpart{break-inside:avoid}
+  .wpart figure>svg{max-height:66mm}
   .myp-m{color:#555}
   .eyebrow{color:#555}
 }
@@ -2172,7 +2207,7 @@ function refreshDots(){const t=T(); document.querySelectorAll('.dot').forEach((d
 function myAnswer(p){
   const s=ps(p.id), out=[];
   if(p.type==='grid'){ p.rows.forEach((row,i)=>{
-      const cells=p.cols.map((c,j)=>`${c} ${String(s.v[`${i}_${j}`]??'').trim()||'—'}`).join(' · ');
+      const cells=p.cols.map((c,j)=>`${plain(c)}→${String(s.v[`${i}_${j}`]??'').trim()||'—'}`).join(', ');
       out.push(`${plain(row.label)}: ${cells}`); }); }
   else if(p.type==='fields'){ p.fields.forEach(f=>out.push(`${plain(f.label)} ${String(s.v[f.k]??'').trim()||'—'}`)); }
   else if(p.type==='choices'){ p.groups.forEach(g=>{
@@ -2206,8 +2241,11 @@ function cardText(){
 /* 내보낼 때 쓰는 공통 조각: 페이지의 모든 스타일 + XML 안전 처리 */
 function exportCSS(){ return xmlSafe([...document.querySelectorAll('style')].map(s=>s.textContent).join('\n')); }
 function xmlSafe(t){ return t.replace(/&nbsp;/g,'&#160;')
-  .replace(/&(?![a-zA-Z][a-zA-Z0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)/g,'&amp;'); }
-/* 카드를 그림 한 장으로 — 인쇄가 막힌 휴대폰 브라우저를 위한 길 */
+  .replace(/&(?![a-zA-Z][a-zA-Z0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)/g,'&amp;')
+  // XML에서는 빈 태그도 닫혀 있어야 한다
+  .replace(/<(br|hr|img|input|col|source|wbr|area|base)\b([^>]*?)\/?>/gi,(m,tag,at)=>'<'+tag+at+'/>'); }
+/* 카드를 그림으로 — 인쇄가 막힌 휴대폰 브라우저를 위한 길.
+   수행평가지 모양이라 길이가 길어, 캔버스 한도(약 16000px)를 넘지 않게 여러 장으로 나눈다. */
 function cardImage(cb){
   const card=document.getElementById('mycard'); if(!card) return cb(null);
   const W=Math.ceil(card.getBoundingClientRect().width), H=Math.ceil(card.scrollHeight);
@@ -2218,11 +2256,21 @@ function cardImage(cb){
     +'<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+W+'px;background:#fff">'+body+'</div>'
     +'</foreignObject></svg>';
   const im=new Image();
-  im.onload=()=>{ try{
-      const cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2;
-      const g=cv.getContext('2d'); g.scale(2,2); g.fillStyle='#fff'; g.fillRect(0,0,W,H); g.drawImage(im,0,0);
-      if(cv.toBlob) cv.toBlob(bl=>cb(bl?URL.createObjectURL(bl):cv.toDataURL('image/png')),'image/png');
-      else cb(cv.toDataURL('image/png'));
+  im.onload=()=>{
+    try{
+      const S=2, MAX=3000, n=Math.max(1,Math.ceil(H/MAX)), slice=Math.ceil(H/n), urls=[];
+      let i=0;
+      const step=()=>{
+        if(i>=n) return cb(urls.length?urls:null);
+        const y=i*slice, h=Math.min(slice,H-y);
+        const cv=document.createElement('canvas'); cv.width=W*S; cv.height=h*S;
+        const g=cv.getContext('2d'); g.scale(S,S); g.fillStyle='#fff'; g.fillRect(0,0,W,h);
+        g.drawImage(im,0,-y); i++;
+        const push=u=>{ if(u) urls.push(u); step(); };
+        if(cv.toBlob) cv.toBlob(bl=>push(bl?URL.createObjectURL(bl):null),'image/png');
+        else push(cv.toDataURL('image/png'));
+      };
+      step();
     }catch(e){ cb(null); } };
   im.onerror=()=>cb(null);
   im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
@@ -2238,31 +2286,72 @@ function printDoc(){
     +'</head><body><p class="pbar">브라우저 메뉴 → <b>인쇄</b> → <b>PDF로 저장</b>. 인쇄가 막혀 있으면 이 화면을 캡처해도 된다.</p>'
     +(card?card.outerHTML:'')+'</body></html>';
 }
+function fillin(v){ const t=String(v??'').trim();
+  return t? '<span class="fin">'+esc(t)+'</span>' : '<span class="fin empty">&#160;</span>'; }
+function sheetPart(p){
+  const s=ps(p.id); let body='';
+  if(p.type==='grid'){
+    body='<table class="wt"><thead><tr><th>'+(p.head||'')+'</th>'
+      +p.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +p.rows.map((row,i)=>'<tr><th>'+row.label+'</th>'
+        +p.cols.map((c,j)=>'<td>'+fillin(s.v[i+'_'+j])+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table>';
+  } else if(p.type==='fields'){
+    const byK=Object.fromEntries(p.fields.map(f=>[f.k,f])), used=new Set();
+    let tpl='';
+    if(p.tpl){ tpl='<p class="wtpl">'+p.tpl.split(/\[(\w+)\]/).map((seg,i)=>{
+      if(i%2===0) return seg||''; used.add(seg); return fillin(s.v[seg]); }).join('')+'</p>'; }
+    body=tpl+p.fields.filter(f=>!used.has(f.k)).map(f=>
+      '<p class="wrow">'+f.label+' '+fillin(s.v[f.k])+(f.suffix?' '+f.suffix:'')+'</p>').join('');
+  } else if(p.type==='choices'){
+    body=p.groups.map(g=>{ const sel=g.multi?(Array.isArray(s.v[g.k])?s.v[g.k]:[]):s.v[g.k];
+      return '<p class="wrow">'+g.label+' '+g.opts.map(o=>{
+        const on=g.multi?sel.includes(o):sel===o;
+        return '<span class="opt'+(on?' on':'')+'">'+(on?'■ ':'□ ')+o+'</span>';}).join(' ')+'</p>';}).join('');
+  }
+  let write='';
+  if(p.write){ const txt=String(s.v.text||'').trim();
+    write='<div class="wwrite"><b>서술</b>'
+      +(s.note?'<p class="wnote">공책에 씀</p>':(txt?'<p>'+esc(txt).replace(/\n/g,'<br>')+'</p>':'<p class="wnote">쓰지 않음</p>'))+'</div>'; }
+  const miss=(p.write&&s.sub)?p.write.checklist.map((c,i)=>({t:typeof c==='string'?c:c.t,on:!!s.checks[i]}))
+    .filter(x=>!x.on).map(x=>'<p class="wmiss">다시 볼 것 · '+x.t+'</p>').join(''):'';
+  const r=s.res, mk=hasAuto(p)&&r?(r.ok?'<span class="wmk ok">정확</span>':'<span class="wmk bad">다시 볼 곳 '+r.miss+'</span>'):'';
+  const go=(miss||(hasAuto(p)&&r&&!r.ok))?'<button class="myp-go" data-act="goto" data-i="'+p.__i+'" data-part="'+p.id+'">그 문항으로 가기 →</button>':'';
+  const fig=p.fig&&FIGS[p.fig]?'<figure data-fig="'+p.fig+'"></figure>':'';
+  return '<div class="wpart">'
+    +((p.no||p.q)?'<p class="wq">'+(p.no?'<span class="wno">'+p.no+'</span>':'')+(p.q||'')+mk+'</p>':(mk?'<p class="wq">'+mk+'</p>':''))
+    +(p.aside?'<p class="waside">'+p.aside+'</p>':'')+fig+body+write+miss
+    +(s.hint?'<p class="whint">힌트 '+s.hint+'단계를 열어 봄</p>':'')+go+'</div>';
+}
 function cardHTML(){
-  const d=cardData();
+  const t=T(), A=autoStats(t);
+  const hints=allParts(t).reduce((n,p)=>n+ps(p.id).hint,0);
+  const st=ts(); const refl=(t.reflect||[]).map(([k],i)=>st.refl[i]?k:null).filter(Boolean);
+  const reflText=String(st.reflText||'').trim();
+  t.acts.forEach((a,i)=>a.parts.forEach(p=>{p.__i=i;}));
   return `<main class="card-wrap wrap">
     <div class="card-tools">
       <button class="btn" data-act="report">← 점검 결과</button>
-      <button class="btn primary" data-act="copy-card">카드 내용 복사</button>
-      <button class="btn" data-act="print-card" id="print-card">PDF로 저장</button>
+      <button class="btn primary" data-act="print-card" id="print-card">PDF로 저장</button>
       <button class="btn" data-act="img-card" id="img-card">이미지로 저장</button>
+      <button class="btn" data-act="copy-card">카드 내용 복사</button>
     </div>
-    <p class="disc" id="print-tip" hidden>인쇄용 페이지가 새 탭에 열린다. 인쇄 창이 안 뜨면 그 탭에서 브라우저 메뉴(⋮ 또는 공유 버튼) → <b>인쇄</b> → <b>PDF로 저장</b>을 고르면 된다.<br>카카오톡·네이버 같은 <b>앱 안의 화면</b>에서는 인쇄가 막혀 있다. 메뉴에서 <b>다른 브라우저로 열기</b>(Chrome·Safari)를 고른 뒤 다시 누르거나, 화면을 <b>캡처</b>하자.</p>
-    <p class="disc">이 화면을 <b>캡처</b>해 두면 수행평가 직전에 내가 쓴 답을 한눈에 다시 볼 수 있다. 모범 답안은 들어 있지 않다.</p>
+    <p class="disc" id="print-tip" hidden>인쇄용 페이지가 새 탭에 열린다. 인쇄 창이 안 뜨면 그 탭에서 브라우저 메뉴(⋮ 또는 공유 버튼) → <b>인쇄</b> → <b>PDF로 저장</b>을 고르면 된다.<br>카카오톡·네이버 같은 <b>앱 안의 화면</b>에서는 인쇄가 막혀 있다. 메뉴에서 <b>다른 브라우저로 열기</b>(Chrome·Safari)를 고른 뒤 다시 누르거나, 아래 <b>이미지로 저장</b>을 쓰자.</p>
+    <p class="disc">내가 쓴 답을 수행평가지 모양 그대로 옮긴 것이다. 모범 답안은 들어 있지 않다.</p>
     <div id="img-out" hidden></div>
     <article class="mycard" id="mycard">
       <header class="mycard-h">
-        <div><div class="eyebrow">내 정리 카드</div><h1>${d.t.title}</h1></div>
-        <div class="mycard-stat"><b>${d.A.ok}</b><span>/${d.A.n} 문항</span><small>연 힌트 ${d.hints}개</small></div>
+        <div><div class="eyebrow">내가 푼 수행평가지</div><h1>${t.title}</h1></div>
+        <div class="mycard-stat"><b>${A.ok}</b><span>/${A.n} 문항</span><small>연 힌트 ${hints}개</small></div>
       </header>
-      ${d.acts.map(a=>`<section class="mycard-act"><h2>${a.title}${a.heading?` <span>${a.heading}</span>`:''}</h2>
-        ${a.parts.map(p=>`<div class="myp"><span class="myp-no">${p.no}</span><div class="myp-b">
-          ${p.lines.map(l=>`<p>${esc(l)}</p>`).join('')}
-          ${p.hint?`<p class="myp-m">힌트 ${p.hint}단계 열어 봄</p>`:''}
-          ${p.miss.map(m=>`<p class="myp-x">다시 볼 것 · ${m}</p>`).join('')}
-          ${p.miss.length?`<button class="myp-go" data-act="goto" data-i="${p.i}" data-part="${p.id}">그 문항으로 가기 →</button>`:''}
-        </div></div>`).join('')}</section>`).join('')}
-      ${d.refl.length?`<section class="mycard-act"><h2>내가 쓴 핵심 개념</h2><div class="myp"><div class="myp-b"><p>${d.refl.join(' · ')}</p>${d.reflText?`<p>${esc(d.reflText)}</p>`:''}</div></div></section>`:''}
+      ${t.acts.map(a=>`<section class="mycard-act">
+        <h2>${a.title}${a.heading?` <span>${a.heading}</span>`:''}${a.area?` <span>${a.area}. ${esc((t.areas&&t.areas[a.area])||'')}</span>`:''}</h2>
+        ${a.box?`<div class="wbox">${a.box}</div>`:''}
+        ${a.lead?`<p class="wlead">${a.lead}</p>`:''}
+        ${a.parts.map(sheetPart).join('')}</section>`).join('')}
+      ${(refl.length||reflText)?`<section class="mycard-act"><h2>정리 활동 · 내가 쓴 핵심 개념</h2>
+        <div class="wpart">${refl.length?`<p class="wrow">${refl.map(k=>`<span class="opt on">■ ${k}</span>`).join(' ')}</p>`:''}
+        ${reflText?`<div class="wwrite"><b>서술</b><p>${esc(reflText).replace(/\n/g,'<br>')}</p></div>`:''}</div></section>`:''}
     </article>
   </main>`;
 }
@@ -2483,17 +2572,19 @@ document.addEventListener('click',e=>{
       break;}
     case 'img-card': {
       b.textContent='만드는 중…'; b.disabled=true;
-      cardImage(url=>{ b.disabled=false; b.textContent='이미지로 저장';
+      cardImage(urls=>{ b.disabled=false; b.textContent='이미지로 저장';
         const out=document.getElementById('img-out');
-        if(!url){ const n=document.getElementById('print-tip'); if(n) n.hidden=false;
-          say('이미지를 만들지 못했다. 화면을 캡처하자.'); return; }
-        out.innerHTML='<p class="disc">아래 그림을 <b>꾹 눌러</b> “이미지 저장”을 고르면 사진첩에 들어간다. 저장이 자동으로 됐다면 그대로 두면 된다.</p>'
-          +'<img src="'+url+'" alt="내 정리 카드를 한 장으로 담은 그림">';
+        if(!urls||!urls.length){ const n=document.getElementById('print-tip'); if(n) n.hidden=false;
+          say('이미지를 만들지 못했다. PDF로 저장을 쓰거나 화면을 캡처하자.'); return; }
+        out.innerHTML='<p class="disc">그림을 <b>꾹 눌러</b> “이미지 저장”을 고르면 사진첩에 들어간다.'
+          +(urls.length>1?' 길어서 <b>'+urls.length+'장</b>으로 나눴다. 한 장씩 저장하자.':'')+'</p>'
+          +urls.map((u,i)=>'<figure class="imgpg"><img src="'+u+'" alt="내가 푼 수행평가지 '+(i+1)+'번째 장">'
+            +(urls.length>1?'<figcaption>'+(i+1)+' / '+urls.length+'</figcaption>':'')+'</figure>').join('');
         out.hidden=false;
-        const a=document.createElement('a'); a.href=url; a.download='내_정리_카드.png';
-        document.body.appendChild(a); try{a.click();}catch(e){} a.remove();
+        if(urls.length===1){ const a=document.createElement('a'); a.href=urls[0]; a.download='내가_푼_수행평가지.png';
+          document.body.appendChild(a); try{a.click();}catch(e){} a.remove(); }
         out.scrollIntoView({block:'start',behavior:'smooth'});
-        say('이미지를 만들었다. 꾹 눌러 저장하자.'); });
+        say('이미지 '+urls.length+'장을 만들었다. 꾹 눌러 저장하자.'); });
       break;}
     case 'copy-card': {const txt=cardText();
       const done2=()=>{b.textContent='복사했다'; setTimeout(()=>{if(b.isConnected)b.textContent='카드 내용 복사';},2000);};
