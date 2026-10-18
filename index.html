@@ -2201,13 +2201,22 @@ function cardText(){
   if(d.reflText){ L.push(`   ${d.reflText}`); }
   return L.join('\n');
 }
+function cacheSVG(){
+  // MathJax tex-svg는 글리프를 문서 한 곳의 <svg> 캐시에 모아 두고 <use>로 참조한다.
+  // 이것을 함께 복사하지 않으면 인쇄 문서에서 수식이 빈칸으로 나온다.
+  const c=document.getElementById('MJX-SVG-global-cache');
+  return c?c.outerHTML:'';
+}
 function printDoc(){
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   const card=document.getElementById('mycard');
   return '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
     +'<meta name="viewport" content="width=device-width,initial-scale=1"><title>내 정리 카드</title>'
-    +'<style>'+css+'\nbody{margin:0;padding:14px;background:#fff;color:#111}.myp-go{display:none!important}</style>'
-    +'</head><body>'+(card?card.outerHTML:'')+'</body></html>';
+    +'<style>'+css+'\nbody{margin:0;padding:14px;background:#fff;color:#111}.myp-go{display:none!important}'
+    +'.pbar{margin:0 0 14px;padding:10px 12px;border:1px solid #c9cdd8;border-radius:8px;font:14px system-ui;color:#333}'
+    +'@media print{.pbar{display:none!important}}</style>'
+    +'</head><body>'+cacheSVG()+'<p class="pbar">브라우저 메뉴 → <b>인쇄</b> → <b>PDF로 저장</b>. 인쇄가 막혀 있으면 이 화면을 캡처해도 된다.</p>'
+    +(card?card.outerHTML:'')+'</body></html>';
 }
 function cardHTML(){
   const d=cardData();
@@ -2217,7 +2226,7 @@ function cardHTML(){
       <button class="btn primary" data-act="copy-card">카드 내용 복사</button>
       <button class="btn" data-act="print-card" id="print-card">PDF로 저장</button>
     </div>
-    <p class="disc" id="print-tip" hidden>인쇄 창이 열리지 않으면 브라우저 메뉴(⋮ 또는 공유 버튼)에서 <b>인쇄</b>를 고르고 <b>PDF로 저장</b>을 선택하면 된다. 화면을 <b>캡처</b>해도 된다.</p>
+    <p class="disc" id="print-tip" hidden>인쇄용 페이지가 새 탭에 열린다. 인쇄 창이 안 뜨면 그 탭에서 브라우저 메뉴(⋮ 또는 공유 버튼) → <b>인쇄</b> → <b>PDF로 저장</b>을 고르면 된다.<br>카카오톡·네이버 같은 <b>앱 안의 화면</b>에서는 인쇄가 막혀 있다. 메뉴에서 <b>다른 브라우저로 열기</b>(Chrome·Safari)를 고른 뒤 다시 누르거나, 화면을 <b>캡처</b>하자.</p>
     <p class="disc">이 화면을 <b>캡처</b>해 두면 수행평가 직전에 내가 쓴 답을 한눈에 다시 볼 수 있다. 모범 답안은 들어 있지 않다.</p>
     <article class="mycard" id="mycard">
       <header class="mycard-h">
@@ -2443,12 +2452,12 @@ document.addEventListener('click',e=>{
     case 'card': ui.screen='card'; render(); break;
     case 'goto': {ui.act=+b.dataset.i; ui.screen='act'; ui.goto=b.dataset.part; ts().last=ui.act; save(); render(); break;}
     case 'print-card': {
-      let ok=false;
-      if(window.self===window.top&&typeof window.print==='function'){ try{window.print(); ok=true;}catch(e){} }
-      if(!ok){ let w=null; try{w=window.open('','_blank');}catch(e){}
-        if(w&&w.document){ try{ w.document.open(); w.document.write(printDoc()); w.document.close();
-            setTimeout(()=>{try{w.focus();w.print();}catch(e){}},700); ok=true; }catch(e){} } }
-      if(!ok){ const n=document.getElementById('print-tip'); if(n){n.hidden=false; say('인쇄 창을 열 수 없다. 아래 안내를 참고하자.');} }
+      let w=null; try{w=window.open('','_blank');}catch(e){}
+      if(w&&w.document){ try{ w.document.open(); w.document.write(printDoc()); w.document.close();
+          setTimeout(()=>{try{w.focus(); if(typeof w.print==='function') w.print();}catch(e){}},800);
+        }catch(e){ w=null; } }
+      if(!w && window.self===window.top && typeof window.print==='function'){ try{window.print();}catch(e){} }
+      {const n=document.getElementById('print-tip'); if(n){ n.hidden=false; say('인쇄용 페이지를 열었다. 열리지 않으면 아래 안내를 보자.'); }}
       break;}
     case 'copy-card': {const txt=cardText();
       const done2=()=>{b.textContent='복사했다'; setTimeout(()=>{if(b.isConnected)b.textContent='카드 내용 복사';},2000);};
