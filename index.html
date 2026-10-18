@@ -214,6 +214,10 @@ details.brief>.brief-in{padding:0 10px 10px;display:grid;gap:10px}
 details.brief .formula{background:var(--surface)}
 details.brief figure{background:var(--surface)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.keys{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.keys>span{font-size:12.5px;color:var(--muted)}
+.key{min-width:48px;min-height:44px;border:1.5px solid var(--line-ctl);border-radius:9px;background:var(--surface);font:600 18px var(--f-num);color:var(--ink)}
+.key:hover{border-color:var(--accent)}
 .ccard{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:8px;background:var(--surface-2);min-width:0}
 .ccard h4{font-size:14px}
 .fld{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
@@ -2043,19 +2047,27 @@ function inputHTML(p,s,r,k,fd){
   const cls=r?(r.f[k]?' ok':' bad'):'';
   return `<input class="num${cls}" id="${p.id}__${k}" data-pid="${p.id}" data-k="${k}" inputmode="${fd&&fd.text?'text':'decimal'}" autocomplete="off" aria-label="${esc(fd&&fd.label?plain(fd.label):k)}" value="${esc(s.v[k])}">`;
 }
+/* 휴대폰 숫자 키패드에는 −, / 가 없다. 음수·분수 답을 칠 수 있도록 보조 키를 둔다. */
+function keypad(p){
+  return `<div class="keys"><span>자판에 없는 기호</span>
+    <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="-" aria-label="빼기 기호 넣기">−</button>
+    <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="/" aria-label="분수 빗금 넣기">/</button>
+    <button type="button" class="key" data-act="key" data-pid="${p.id}" data-ch="." aria-label="소수점 넣기">.</button></div>`;
+}
 function partHTML(p){
   const s=ps(p.id), r=s.res;
   let body='';
   if(p.type==='grid'){
     body=(p.head?`<div class="grid-head">${p.head}</div>`:'')+`<div class="cards">${p.cols.map((c,j)=>`<div class="ccard"><h4>${c}</h4>${p.rows.map((row,i)=>{const k=`${i}_${j}`;
       if(row.opts){const cls=r?(r.f[k]?' ok':' bad'):''; return `<div class="fld">${row.label}<div class="seg cell${cls}" role="group" aria-label="${esc(plain(row.label))}">${row.opts.map(o=>`<button aria-pressed="${s.v[k]===o}" data-act="cell" data-pid="${p.id}" data-k="${k}" data-v="${esc(o)}">${o}</button>`).join('')}</div></div>`;}
-      return `<label class="fld">${row.label}${inputHTML(p,s,r,k,row)}</label>`}).join('')}</div>`).join('')}</div>`;
+      return `<label class="fld">${row.label}${inputHTML(p,s,r,k,row)}</label>`}).join('')}</div>`).join('')}</div>`
+      + (p.rows.some(x=>!x.opts)?keypad(p):'');
   } else if(p.type==='fields'){
     const byK=Object.fromEntries(p.fields.map(f=>[f.k,f])); const used=new Set();
     let tpl='';
     if(p.tpl){ tpl='<div class="tpl">'+p.tpl.split(/\[(\w+)\]/).map((seg,i)=>{ if(i%2===0) return seg?`<span>${seg}</span>`:''; used.add(seg); return byK[seg]?inputHTML(p,s,r,seg,byK[seg]):`[${seg}]`; }).join('')+'</div>'; }
     const rest=p.fields.filter(f=>!used.has(f.k)).map(f=>`<label class="fld-row"><span class="lb">${f.label}</span>${inputHTML(p,s,r,f.k,f)}${f.suffix?`<span>${f.suffix}</span>`:''}</label>`).join('');
-    body=`<div class="fields">${tpl}${rest}</div>`;
+    body=`<div class="fields">${tpl}${rest}</div>`+keypad(p);
   } else if(p.type==='choices'){
     body=p.groups.map(g=>{
       const sel=g.multi?(Array.isArray(s.v[g.k])?s.v[g.k]:[]):s.v[g.k];
@@ -2358,6 +2370,8 @@ function reportHTML(){
 }
 
 /* ---------- events ---------- */
+let lastNum=null;
+document.addEventListener('focusin',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('num')) lastNum=e.target.id; });
 document.addEventListener('input',e=>{
   const el=e.target; if(!el.dataset) return;
   if(el.dataset.act==='refl-text'){ts().reflText=el.value; save(); return;}
@@ -2400,6 +2414,19 @@ document.addEventListener('click',e=>{
       if(b.dataset.multi==='1'){const arr=Array.isArray(s.v[k])?s.v[k].slice():[]; const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); s.v[k]=arr;}
       else s.v[k]=v;
       s.res=null; save(); rerenderPart(id); break;}
+    case 'key': {
+      let el=lastNum?document.getElementById(lastNum):null;
+      const part=document.getElementById('part-'+id);
+      if(!el||!part||!part.contains(el)) el=part&&part.querySelector('input.num');
+      if(!el) break;
+      const ch=b.dataset.ch;
+      const a0=el.selectionStart??el.value.length, b0=el.selectionEnd??a0;
+      el.value=el.value.slice(0,a0)+ch+el.value.slice(b0);
+      const pos=a0+ch.length;
+      ps(id).v[el.dataset.k]=el.value; save();
+      el.focus(); try{el.setSelectionRange(pos,pos)}catch(e){}
+      lastNum=el.id;
+      break;}
     case 'cell': {const s=ps(id); s.v[b.dataset.k]=b.dataset.v; s.res=null; save(); rerenderPart(id); break;}
     case 'mode': {const s=ps(id); s.note=b.dataset.v==='note'; save(); rerenderPart(id); break;}
     case 'idk': {const s=ps(id); s.tried=true; s.hint=Math.max(s.hint,1); save(); rerenderPart(id); const h=partById(id).hints[0]; say('힌트 1단계: '+plain(h&&h.t||'')); if(h&&h.ref) showRef(h.ref); break;}
